@@ -67,7 +67,7 @@ def chat():
         profile_context = "Recomendaciones de películas."
 
     # Agregar un intent para enviar un mensaje
-    #intents["Enviar"] = request.form.get("message")
+    intents["Enviar"] = request.form.get("message")
 
     if request.method == "GET":
         # Pasar los intents al template para que se muestren como botones
