@@ -130,8 +130,8 @@ def recommend():
             "role": "system",
             "content": """
             Eres un chatbot que recomienda películas, te llamas iA MovieAssist. 
-            Tu rol es responder recomendaciones de manera breve y concisa, una pelicula por recomendacion. No repitas recomendaciones.
-            Ademas debes considerar las preferencias del perfil del usuarios que tambien se pueden llamar generos de peliculas
+            Tu rol es responder recomendaciones de manera breve y concisa. No repitas recomendaciones.
+            ademas debes considerar las preferencias del perfil del usuarios que tambien se pueden llamar generos de peliculas
             """,
         }
     ]
@@ -176,4 +176,3 @@ def editar_perfil():
         return redirect(url_for("editar_perfil"))  # Redirigir a la página de perfil
 
     return render_template("editar_perfil.html", profile=profile)
-
