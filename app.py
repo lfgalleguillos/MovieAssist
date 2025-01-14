@@ -67,7 +67,7 @@ def chat():
         profile_context = "Recomendaciones de películas."
 
     # Agregar un intent para enviar un mensaje
-    intents["Enviar"] = request.form.get("message")
+    #intents["Enviar"] = request.form.get("message")
 
     if request.method == "GET":
         # Pasar los intents al template para que se muestren como botones
@@ -130,8 +130,8 @@ def recommend():
             "role": "system",
             "content": """
             Eres un chatbot que recomienda películas, te llamas iA MovieAssist. 
-            Tu rol es responder recomendaciones de manera breve y concisa. No repitas recomendaciones.
-            ademas debes considerar las preferencias del perfil del usuarios que tambien se pueden llamar generos de peliculas
+            Tu rol es responder recomendaciones de manera breve y concisa, una pelicula por recomendacion. No repitas recomendaciones.
+            Ademas debes considerar las preferencias del perfil del usuarios que tambien se pueden llamar generos de peliculas
             """,
         }
     ]
