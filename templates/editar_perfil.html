@@ -65,18 +65,5 @@
     </div>
 
 </div>
-
-<!-- Script para mostrar el mensaje de éxito -->
-<script>
-    const form = document.getElementById('editProfileForm');
-    const successMessage = document.getElementById('successMessage');
-
-    form.addEventListener('submit', (event) => {
-        successMessage.style.display = 'block';
-        setTimeout(() => {
-            successMessage.style.display = 'none';
-        }, 3000); // Ocultar mensaje después de 3 segundos
-    });
-</script>
 {% endblock %}
 
