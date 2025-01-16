@@ -42,28 +42,3 @@
 </div>
 {% endblock %}
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const checkboxes = document.querySelectorAll('.form-check-input');
-        const message = document.createElement('div');
-        message.id = 'genre-count';
-        message.className = 'mt-3';
-        message.style.fontWeight = 'bold';
-        document.querySelector('form').appendChild(message);
-
-        function updateGenreCount() {
-            const selectedCount = Array.from(checkboxes).filter(checkbox => checkbox.checked).length;
-            message.textContent = `Has seleccionado ${selectedCount} género(s).`;
-        }
-
-        // Initialize the counter on page load
-        updateGenreCount();
-
-        // Add event listeners to update the count dynamically
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', updateGenreCount);
-        });
-    });
-</script>
-
-
