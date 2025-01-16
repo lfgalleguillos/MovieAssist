@@ -10,13 +10,17 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center">
             <h1 class="h4 mb-0">Chat con iA MovieAssist</h1>
-            <div>
-                <button class="btn btn-light" onclick="window.location.href='{{ url_for('editar_perfil') }}'">
-                    Editar perfil
-                </button>
+            <div class="d-flex align-items-center">
+                <!-- Mostrar el nombre del usuario conectado -->
+                <p class="mb-0 me-3">Bienvenido, <strong>{{ current_user.email }}</strong></p>
+                <!-- Botón para editar perfil -->
+                <a href="{{ url_for('editar_perfil') }}" class="btn btn-light me-2">Editar perfil</a>
+                <!-- Botón para cerrar sesión -->
+                <form action="{{ url_for('logout') }}" method="get" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Cerrar sesión</button>
+                </form>
             </div>
         </div>
-        
         <!-- Variables de sesión -->
         <div class="mt-2">
             <p class="small mb-0">
@@ -49,8 +53,8 @@
             {% endif %}
         {% endfor %}
     </div>
-      <!-- Mostrar los intents siempre -->
-      <div class="d-flex flex-wrap mb-4 pt-2" style="padding-top: 10px;">
+    <!-- Mostrar los intents siempre -->
+    <div class="d-flex flex-wrap mb-4 pt-2" style="padding-top: 10px;">
         {% for intent, message in intents.items() %}
             <form method="POST" class="me-2 mb-2">
                 <button class="btn btn-primary" type="submit" name="intent" value="{{ intent }}">
@@ -70,4 +74,3 @@
     </div>
 </div>
 {% endblock %}
-
