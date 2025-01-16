@@ -4,10 +4,14 @@
 {% endblock %}
 {% block content %}
 <div class="container col-xxl-8 px-4 py-5">
-        
     <h2>Editar Perfil</h2>
-    
-    <form method="POST" action="{{ url_for('editar_perfil') }}" id="editProfileForm">
+
+    <!-- Mensaje de éxito -->
+    <div id="success-message" class="alert alert-success" style="display: none;">
+        ¡Cambios guardados exitosamente!
+    </div>
+
+    <form method="POST" action="{{ url_for('editar_perfil') }}" id="edit-profile-form">
         <label class="form-label">Géneros de películas favoritos</label>
         <div class="form-check">
             <input class="form-check-input" type="checkbox" id="genre_action" name="favorite_movie_genres[]" value="Acción" {% if "Acción" in profile.favorite_movie_genres %}checked{% endif %}>
@@ -36,51 +40,24 @@
         <button type="submit" class="btn btn-primary mt-3">Guardar cambios</button>
     </form>
 
-    <!-- Mensaje de éxito -->
-    <div id="successMessage" style="display: none; background: green; color: white; padding: 10px; margin-top: 10px; border-radius: 5px;">
-        ¡Cambios guardados exitosamente!
-    </div>
-
     <!-- Botones para ir al home o al chat -->
     <div class="mt-4">
         <a href="{{ url_for('chat') }}" class="btn btn-primary">Ir al Chat</a>
     </div>
-
 </div>
 
+<!-- Script para mostrar el mensaje de éxito -->
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const form = document.getElementById("editProfileForm");
-        const successMessage = document.getElementById("successMessage");
+    document.getElementById("edit-profile-form").addEventListener("submit", function(event) {
+        const successMessage = document.getElementById("success-message");
 
-        form.addEventListener("submit", (event) => {
-            // Evita la recarga inmediata del formulario
-            event.preventDefault();
+        // Mostrar mensaje de éxito
+        successMessage.style.display = "block";
 
-            // Realiza una solicitud POST al servidor usando Fetch API
-            const formData = new FormData(form);
-            fetch(form.action, {
-                method: "POST",
-                body: formData,
-            })
-            .then((response) => {
-                if (response.ok) {
-                    // Muestra el mensaje de éxito
-                    successMessage.style.display = "block";
-
-                    // Oculta el mensaje después de 3 segundos
-                    setTimeout(() => {
-                        successMessage.style.display = "none";
-                    }, 3000);
-                } else {
-                    alert("Ocurrió un error al guardar los cambios.");
-                }
-            })
-            .catch((error) => {
-                console.error("Error:", error);
-                alert("Ocurrió un error al guardar los cambios.");
-            });
-        });
+        // Ocultar el mensaje después de 3 segundos
+        setTimeout(() => {
+            successMessage.style.display = "none";
+        }, 3000);
     });
 </script>
 {% endblock %}
