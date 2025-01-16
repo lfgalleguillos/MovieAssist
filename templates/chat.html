@@ -74,3 +74,56 @@
     </div>
 </div>
 {% endblock %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Identifica el contenedor de mensajes
+        const messagesSection = document.querySelector(".messages-section");
+
+        // Hacer que el contenedor haga scroll automático al final
+        function scrollToBottom() {
+            messagesSection.scrollTop = messagesSection.scrollHeight;
+        }
+
+        // Llama a la función al cargar la página
+        scrollToBottom();
+
+        // Establece colores dinámicos para mensajes
+        const messages = document.querySelectorAll(".message-box");
+        messages.forEach((message) => {
+            if (message.classList.contains("user-message")) {
+                message.style.backgroundColor = "#c6ffc1"; // Verde más claro
+            } else if (message.classList.contains("assistant-message")) {
+                message.style.backgroundColor = "#d6e5ff"; // Azul más claro
+            }
+        });
+
+        // Escucha el envío de formularios
+        const form = document.querySelector("form.message-input-container");
+        form.addEventListener("submit", (event) => {
+            // Desactiva la recarga por defecto
+            event.preventDefault();
+
+            // Agrega un mensaje de usuario temporal
+            const input = form.querySelector("input[name='message']");
+            const userMessage = input.value.trim();
+            if (userMessage) {
+                // Crear el elemento HTML para el mensaje del usuario
+                const userMessageElement = document.createElement("div");
+                userMessageElement.className = "d-flex flex-row justify-content-end mb-4";
+                userMessageElement.innerHTML = `
+                    <div class="p-3 me-3 message-box user-message">
+                        <p class="small mb-0 text-info">${userMessage}</p>
+                    </div>
+                `;
+                messagesSection.appendChild(userMessageElement);
+
+                // Limpia el campo de entrada
+                input.value = "";
+
+                // Hace scroll automático
+                scrollToBottom();
+            }
+        });
+    });
+</script>
