@@ -138,7 +138,8 @@ def forbidden(e):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return redirect(url_for("login"))  # Redirige directamente al login
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -157,7 +158,7 @@ def login():
         else:
             flash("Correo o contraseña incorrectos.", "danger")
 
-    return render_template("login.html")
+    return render_template("login.html")  
 
 @app.route("/logout", methods=["GET"])
 @login_required
