@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from config.db.db import db_config, db
 from config.models.models import User, Message, Profile
 import requests
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
@@ -15,6 +17,15 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_key")
 bootstrap = Bootstrap5(app)
 db_config(app)
+
+# Configuración de Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Configuración de la API de TMDB
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
@@ -131,27 +142,68 @@ def home():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    error = None
+    if current_user.is_authenticated:
+        return redirect(url_for("chat"))  # Redirige al chat si ya está autenticado
+
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
-        session["user_id"] = 1
-        print("session")
-        print(session["user_id"])
+        user = User.query.filter_by(email=email).first()
 
-        # Cargar el perfil del usuario en la sesión
-        profile = Profile.query.filter_by(user_id=session["user_id"]).first()
-        session["profile"] = {"favorite_movie_genres": profile.favorite_movie_genres}
-        print("session[profile]")
-        print(session["profile"])
-    return redirect("/chat")
+        if user and check_password_hash(user.hashed_password, password):  # Verifica la contraseña hashed
+            login_user(user)
+            flash("Inicio de sesión exitoso.", "success")
+            return redirect(url_for("chat"))  # Redirige al chat después de iniciar sesión correctamente
+        else:
+            flash("Correo o contraseña incorrectos.", "danger")
+
+    return render_template("login.html")
+
+@app.route("/logout", methods=["GET"])
+@login_required
+def logout():
+    logout_user()
+    flash("Sesión cerrada con éxito.", "success")
+    return redirect(url_for("login"))
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for("chat"))
+
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        if User.query.filter_by(email=email).first():
+            flash("El correo ya está registrado.", "danger")
+        else:
+            hashed_password = generate_password_hash(password)
+            new_user = User(email=email, hashed_password=hashed_password)
+            db.session.add(new_user)
+            db.session.commit()
+
+            # Crear un perfil vacío asociado al nuevo usuario
+            new_profile = Profile(user_id=new_user.id, favorite_movie_genres=[])
+            db.session.add(new_profile)
+            db.session.commit()
+
+            flash("Registro exitoso. Ahora puedes iniciar sesión.", "success")
+            login_user(new_user)
+            return redirect(url_for("chat"))
+
+    return render_template("register.html")
 
 @app.route("/chat", methods=["GET", "POST"])
+@login_required
 def chat():
-    # Obtener el usuario
-    user = db.session.query(User).first()
-    # Cargar el perfil del usuario en la sesión
-    profile = Profile.query.filter_by(user_id=session["user_id"]).first()
+    user = current_user
+    profile = Profile.query.filter_by(user_id=user.id).first()
+
+    # Validar si el perfil existe
+    if not profile:
+        flash("Debes completar tu perfil antes de usar el chat.", "warning")
+        return redirect(url_for("editar_perfil"))
+
     session["profile"] = {"favorite_movie_genres": profile.favorite_movie_genres}
     intents = {}
 
@@ -237,8 +289,9 @@ def chat():
     return render_template("chat.html", messages=user.messages, intents=intents)
 
 @app.post("/recommend")
+@login_required
 def recommend():
-    user = db.session.query(User).first()
+    user = current_user
     data = request.get_json()
     user_message = data["message"]
     new_message = Message(content=user_message, author="user", user=user)
@@ -256,14 +309,7 @@ def recommend():
         }
     ]
 
-    for message in user.messages[-10:]:  # Limitar a los últimos 10 mensajes
-        messages_for_llm.append(
-            {
-                "role": message.author,
-                "content": message.content,
-            }
-        )
-
+    # Llamar al modelo para generar una recomendación
     chat_completion = client.chat.completions.create(
         messages=messages_for_llm,
         model="gpt-4-0613",
@@ -277,9 +323,16 @@ def recommend():
     }
 
 @app.route("/editar-perfil", methods=["GET", "POST"])
+@login_required
 def editar_perfil():
-    # Obtener el perfil del usuario (esto depende de tu implementación)
-    profile = db.session.query(Profile).first()
+    # Obtener el perfil del usuario
+    profile = Profile.query.filter_by(user_id=current_user.id).first()
+
+    # Si el perfil no existe, créalo
+    if not profile:
+        profile = Profile(user_id=current_user.id, favorite_movie_genres=[])
+        db.session.add(profile)
+        db.session.commit()
 
     if request.method == "POST":
         # Obtener los valores del formulario
@@ -294,3 +347,6 @@ def editar_perfil():
         return redirect(url_for("editar_perfil"))
 
     return render_template("editar_perfil.html", profile=profile)
+
+if __name__ == "__main__":
+    app.run(debug=True)
