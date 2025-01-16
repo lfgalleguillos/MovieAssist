@@ -4,10 +4,28 @@
 {% endblock %}
 {% block content %}
 <div class="container col-xxl-8 px-4 py-5">
-        
+
     <h2>Editar Perfil</h2>
-    
+
+    <!-- Mostrar mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div>
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" role="alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <form method="POST" action="{{ url_for('editar_perfil') }}" id="editProfileForm">
+        <!-- CSRF Token (si es necesario) -->
+        {% if csrf_token %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+
         <label class="form-label">Géneros de películas favoritos</label>
         <div class="form-check">
             <input class="form-check-input" type="checkbox" id="genre_action" name="favorite_movie_genres[]" value="Acción" {% if "Acción" in profile.favorite_movie_genres %}checked{% endif %}>
@@ -48,5 +66,17 @@
 
 </div>
 
+<!-- Script para mostrar el mensaje de éxito -->
+<script>
+    const form = document.getElementById('editProfileForm');
+    const successMessage = document.getElementById('successMessage');
+
+    form.addEventListener('submit', (event) => {
+        successMessage.style.display = 'block';
+        setTimeout(() => {
+            successMessage.style.display = 'none';
+        }, 3000); // Ocultar mensaje después de 3 segundos
+    });
+</script>
 {% endblock %}
 
