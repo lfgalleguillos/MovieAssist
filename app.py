@@ -55,6 +55,39 @@ def get_movie_id(movie_name):
             return None
     else:
         raise Exception(f"Error al buscar el movie_id: {response.status_code}")
+    
+# Función para buscar detalles de películas por nombre
+def get_movie_details(movie_name):
+    search_endpoint = f"{TMDB_BASE_URL}/search/movie"
+    headers = {
+        "accept": "application/json",
+        "Authorization": f"Bearer {TMDB_BEARER_TOKEN}"
+    }
+    params = {
+        "query": movie_name,
+        "include_adult": False,
+        "language": "en-US",
+        "page": 1
+    }
+    response = requests.get(search_endpoint, headers=headers, params=params)
+
+    if response.status_code == 200:
+        results = response.json().get("results", [])
+        if results:
+            # Extraer información de la primera película encontrada
+            movie = results[0]
+            return {
+                "title": movie.get("title"),
+                "overview": movie.get("overview"),
+                "release_date": movie.get("release_date"),
+                "vote_average": movie.get("vote_average"),
+                "poster_path": f"https://image.tmdb.org/t/p/w500{movie.get('poster_path')}" if movie.get("poster_path") else None
+            }
+        else:
+            return {"error": "No se encontraron resultados para esa película."}
+    else:
+        raise Exception(f"Error al buscar detalles de la película: {response.status_code}")
+
 
 # Función para buscar el ID de una serie de TV
 def get_tv_id(tv_name):
@@ -131,6 +164,22 @@ tmdb_function_descriptors = [
         }
     }
 ]
+
+tmdb_function_descriptors.append({
+    "name": "get_movie_details",
+    "description": "Busca información sobre una película por su nombre.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "movie_name": {
+                "type": "string",
+                "description": "El nombre de la película a buscar."
+            }
+        },
+        "required": ["movie_name"]
+    }
+})
+
 
 @app.errorhandler(403)
 def forbidden(e):
@@ -235,6 +284,7 @@ def chat():
         # Guardar nuevo mensaje en la base de datos
         db.session.add(Message(content=user_message, author="user", user=user))
         db.session.commit()
+
         # Preparar los mensajes para el LLM (modelo de lenguaje)
         messages_for_llm = [
             {
@@ -273,6 +323,30 @@ def chat():
                     model_response = f"Proveedores de streaming en Chile para '{arguments['name']}' ({arguments['type']}): {', '.join(providers)}"
                 except Exception as e:
                     model_response = f"Hubo un error al obtener los proveedores: {str(e)}"
+
+            elif function_call.name == "get_movie_details":
+                try:
+                    # Llama a la función para obtener los detalles de la película
+                    movie_details = get_movie_details(arguments['movie_name'])
+
+                    # Prepara un contexto enriquecido para OpenAI
+                    additional_context = f"Información de la película '{arguments['movie_name']}': {movie_details}. Usa esta información para responder de manera completa y útil al usuario."
+
+                    # Reenvía los mensajes al modelo con el contexto adicional
+                    messages_for_llm.append({
+                        "role": "system",
+                        "content": additional_context,
+                    })
+
+                    # Llamada al modelo para generar una respuesta elaborada
+                    enriched_response = client.chat.completions.create(
+                        messages=messages_for_llm,
+                        model="gpt-4-0613",
+                    )
+                    model_response = enriched_response.choices[0].message.content or "Lo siento, no pude elaborar una respuesta."
+                except Exception as e:
+                    model_response = f"Hubo un error al obtener la información de la película: {str(e)}"
+
         else:
             # Asignar respuesta generativa si no hay función
             model_response = chat_completion.choices[0].message.content or "No se generó una respuesta válida."
