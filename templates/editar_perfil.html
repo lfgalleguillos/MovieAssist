@@ -4,7 +4,6 @@
 {% endblock %}
 {% block content %}
 <div class="container col-xxl-8 px-4 py-5">
-        
     <h2>Editar Perfil</h2>
     
     <!-- Mostrar mensajes flash -->
@@ -21,7 +20,7 @@
     {% endwith %}
     
     <form method="POST" action="{{ url_for('editar_perfil') }}">
-        <!-- CSRF Token (si es necesario) -->
+        <!-- CSRF Token -->
         {% if csrf_token %}
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% endif %}
@@ -58,6 +57,14 @@
     <div class="mt-4">
         <a href="{{ url_for('chat') }}" class="btn btn-primary">Ir al Chat</a>
     </div>
-
 </div>
+
+<!-- Agregar un script para mostrar mensaje de éxito (opcional) -->
+<script>
+    const form = document.querySelector('form');
+    form.addEventListener('submit', (event) => {
+        alert('¡Tus cambios han sido guardados exitosamente!');
+    });
+</script>
 {% endblock %}
+
