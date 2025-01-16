@@ -4,6 +4,7 @@
 {% endblock %}
 {% block content %}
 <div class="container col-xxl-8 px-4 py-5">
+        
     <h2>Editar Perfil</h2>
     
     <form method="POST" action="{{ url_for('editar_perfil') }}">
@@ -39,6 +40,22 @@
     <div class="mt-4">
         <a href="{{ url_for('chat') }}" class="btn btn-primary">Ir al Chat</a>
     </div>
+
 </div>
 {% endblock %}
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector('form');
+        const checkboxes = document.querySelectorAll('.form-check-input');
+
+        form.addEventListener('submit', function (event) {
+            const isAnyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+
+            if (!isAnyChecked) {
+                event.preventDefault(); // Detiene el envío del formulario
+                alert('Por favor, selecciona al menos un género antes de guardar los cambios.');
+            }
+        });
+    });
+</script>
