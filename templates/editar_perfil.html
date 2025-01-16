@@ -5,13 +5,8 @@
 {% block content %}
 <div class="container col-xxl-8 px-4 py-5">
     <h2>Editar Perfil</h2>
-
-    <!-- Mensaje de éxito -->
-    <div id="success-message" class="alert alert-success" style="display: none;">
-        ¡Cambios guardados exitosamente!
-    </div>
-
-    <form method="POST" action="{{ url_for('editar_perfil') }}" id="edit-profile-form">
+    
+    <form method="POST" action="{{ url_for('editar_perfil') }}">
         <label class="form-label">Géneros de películas favoritos</label>
         <div class="form-check">
             <input class="form-check-input" type="checkbox" id="genre_action" name="favorite_movie_genres[]" value="Acción" {% if "Acción" in profile.favorite_movie_genres %}checked{% endif %}>
@@ -45,19 +40,5 @@
         <a href="{{ url_for('chat') }}" class="btn btn-primary">Ir al Chat</a>
     </div>
 </div>
-
-<!-- Script para mostrar el mensaje de éxito -->
-<script>
-    document.getElementById("edit-profile-form").addEventListener("submit", function(event) {
-        const successMessage = document.getElementById("success-message");
-
-        // Mostrar mensaje de éxito
-        successMessage.style.display = "block";
-
-        // Ocultar el mensaje después de 3 segundos
-        setTimeout(() => {
-            successMessage.style.display = "none";
-        }, 3000);
-    });
-</script>
 {% endblock %}
+
