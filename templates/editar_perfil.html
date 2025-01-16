@@ -53,13 +53,33 @@
         const form = document.getElementById("editProfileForm");
         const successMessage = document.getElementById("successMessage");
 
-        form.addEventListener("submit", () => {
-            successMessage.style.display = "block"; // Muestra el mensaje de éxito
+        form.addEventListener("submit", (event) => {
+            // Evita la recarga inmediata del formulario
+            event.preventDefault();
 
-            // Oculta el mensaje después de 3 segundos
-            setTimeout(() => {
-                successMessage.style.display = "none";
-            }, 3000);
+            // Realiza una solicitud POST al servidor usando Fetch API
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: "POST",
+                body: formData,
+            })
+            .then((response) => {
+                if (response.ok) {
+                    // Muestra el mensaje de éxito
+                    successMessage.style.display = "block";
+
+                    // Oculta el mensaje después de 3 segundos
+                    setTimeout(() => {
+                        successMessage.style.display = "none";
+                    }, 3000);
+                } else {
+                    alert("Ocurrió un error al guardar los cambios.");
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("Ocurrió un error al guardar los cambios.");
+            });
         });
     });
 </script>
