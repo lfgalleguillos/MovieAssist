@@ -1,70 +1,26 @@
-{% extends 'base.html' %}
-{% block title %}
-  Editar Perfil - iA MovieAssist
-{% endblock %}
-{% block content %}
-<div class="container col-xxl-8 px-4 py-5">
-    <h2>Editar Perfil</h2>
-    
-    <!-- Mostrar mensajes flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div>
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" role="alert">
-              {{ message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-    
-    <form method="POST" action="{{ url_for('editar_perfil') }}">
-        <!-- CSRF Token -->
-        {% if csrf_token %}
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        {% endif %}
-        
-        <label class="form-label">Géneros de películas favoritos</label>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="genre_action" name="favorite_movie_genres[]" value="Acción" {% if "Acción" in profile.favorite_movie_genres %}checked{% endif %}>
-            <label class="form-check-label" for="genre_action">Acción</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="genre_comedy" name="favorite_movie_genres[]" value="Comedia" {% if "Comedia" in profile.favorite_movie_genres %}checked{% endif %}>
-            <label class="form-check-label" for="genre_comedy">Comedia</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="genre_drama" name="favorite_movie_genres[]" value="Drama" {% if "Drama" in profile.favorite_movie_genres %}checked{% endif %}>
-            <label class="form-check-label" for="genre_drama">Drama</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="genre_horror" name="favorite_movie_genres[]" value="Terror" {% if "Terror" in profile.favorite_movie_genres %}checked{% endif %}>
-            <label class="form-check-label" for="genre_horror">Terror</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="genre_scifi" name="favorite_movie_genres[]" value="Ciencia Ficción" {% if "Ciencia Ficción" in profile.favorite_movie_genres %}checked{% endif %}>
-            <label class="form-check-label" for="genre_scifi">Ciencia Ficción</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="genre_romance" name="favorite_movie_genres[]" value="Romance" {% if "Romance" in profile.favorite_movie_genres %}checked{% endif %}>
-            <label class="form-check-label" for="genre_romance">Romance</label>
-        </div>
-        <button type="submit" class="btn btn-primary mt-3">Guardar cambios</button>
-    </form>
+@app.route("/editar-perfil", methods=["GET", "POST"])
+@login_required
+def editar_perfil():
+    # Obtener el perfil del usuario
+    profile = Profile.query.filter_by(user_id=current_user.id).first()
 
-    <!-- Botones para ir al home o al chat -->
-    <div class="mt-4">
-        <a href="{{ url_for('chat') }}" class="btn btn-primary">Ir al Chat</a>
-    </div>
-</div>
+    # Si el perfil no existe, créalo
+    if not profile:
+        profile = Profile(user_id=current_user.id, favorite_movie_genres=[])
+        db.session.add(profile)
+        db.session.commit()
 
-<!-- Agregar un script para mostrar mensaje de éxito (opcional) -->
-<script>
-    const form = document.querySelector('form');
-    form.addEventListener('submit', (event) => {
-        alert('¡Tus cambios han sido guardados exitosamente!');
-    });
-</script>
-{% endblock %}
+    if request.method == "POST":
+        # Obtener los valores del formulario
+        selected_genres = request.form.getlist("favorite_movie_genres")
+
+        # Actualizar el perfil del usuario con los géneros seleccionados
+        profile.favorite_movie_genres = selected_genres
+        db.session.commit()
+
+        # Redirigir o mostrar un mensaje de éxito
+        flash("Perfil actualizado con éxito", "success")
+        return redirect(url_for("editar_perfil"))
+
+    return render_template("editar_perfil.html", profile=profile)
 
