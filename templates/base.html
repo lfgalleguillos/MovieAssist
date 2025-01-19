@@ -1,29 +1,32 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}iA MovieAssist{% endblock %}</title>
+    <title>{% block title %}MovieAssist{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
         .navbar-custom {
-            background-color: #007bff; /* Cambia este valor por el color de los botones */
+            background-color: #007bff;
         }
         .navbar-custom .navbar-brand, 
         .navbar-custom .nav-link {
             color: white;
         }
         .navbar-custom .nav-link:hover {
-            color: #dceefb; /* Un tono más claro para hover */
+            color: #dceefb;
+        }
+        .text-teal {
+            color: #3cb42c;
         }
     </style>
 </head>
 <body>
+    {% if not hide_navbar %}
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('home') }}">iA MovieAssist</a>
+            <a class="navbar-brand" href="{{ url_for('home') }}">MovieAssist</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -38,9 +41,6 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Iniciar sesión</a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('register') }}">Regístrate</a>
                         </li>
                     {% endif %}
@@ -48,6 +48,7 @@
             </div>
         </div>
     </nav>
+    {% endif %}
 
     <div class="container mt-4">
         {% block content %}{% endblock %}

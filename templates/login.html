@@ -4,40 +4,62 @@
     Iniciar sesión
 {% endblock %}
 
+{% set hide_navbar = True %}
+
 {% block content %}
-<div class="container col-xxl-4 px-4 py-5">
-    <div class="card">
-        <div class="card-body">
-            <h1 class="h3 mb-3 text-center">Iniciar sesión</h1>
-            <!-- Mostrar mensajes flash -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div>
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }}" role="alert">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            <!-- Formulario de inicio de sesión -->
-            <form method="POST">
-                <div class="mb-3">
-                    <label for="email" class="form-label">Correo electrónico</label>
-                    <input type="email" name="email" id="email" class="form-control" required>
+<div class="container vh-100 d-flex align-items-center">
+    <div id="innerPage">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-sm-6 col-xs-12 d-sm-block d-none">
+                <div id="imgBgn" style="height: 100%;"></div>
+            </div>
+            <div class="col-sm-6 col-xs-12 text-white p-5">
+                <div class="lead">
+                    <h3>Bienvenido a MovieAssist</h3>
+                    <p class="fs-6 mb-4 text-info">
+                        Tu asistente para recomendaciones de películas y series.
+                    </p>
+                </div>                
+                <div class="mt-4">
+                    <p><small>Iniciar Sesión</small></p>
                 </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Contraseña</label>
-                    <input type="password" name="password" id="password" class="form-control" required>
+                <form method="POST">
+                    <input class="form-control rounded-0 mb-3" type="email" name="email" id="email" placeholder="Correo electrónico" required>
+                    <input class="form-control rounded-0 mb-3" type="password" name="password" id="password" placeholder="Contraseña" required>                    
+                    <button class="btn btn-info mt-4 w-100" type="submit">Acceder</button>
+                </form>
+                <!-- Enlace para crear cuenta -->
+                <div class="text-center mt-3">
+                    <p>¿No tienes cuenta? <a href="{{ url_for('register') }}">Crea una aquí</a>.</p>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Iniciar sesión</button>
-            </form>
-            <!-- Enlace para crear cuenta -->
-            <div class="text-center mt-3">
-                <p>¿No tienes cuenta? <a href="{{ url_for('register') }}">Crea una aquí</a>.</p>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    body {
+        background: #162847;
+    }
+    #innerPage {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        border-radius: 0px;
+        background: #01102a;
+        box-shadow: 7px 7px 13px 1px #010b1e, -10px -9px 11px 1px #1d335a;        
+    }    
+    .form-control {
+        background: none;
+        border: none;
+        border-bottom: 1px solid #45bdd9;
+        color: #fff;       
+    }
+    #imgBgn {        
+        background: url('{{ url_for('static', filename='images/image.jpg') }}') no-repeat center center;
+        background-size: cover;
+        min-height: 50vh; /* Altura mínima ajustable */
+        width: 100%; /* Mantén el ancho */             
+    }    
+</style>
 {% endblock %}
