@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 import os
+import json
 import pandas as pd
 from flask_bootstrap import Bootstrap5
 from openai import OpenAI
@@ -14,6 +15,7 @@ load_dotenv()
 
 client = OpenAI()
 app = Flask(__name__)
+app.debug = True
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_key")
 bootstrap = Bootstrap5(app)
 db_config(app)
@@ -87,7 +89,6 @@ def get_movie_details(movie_name):
             return {"error": "No se encontraron resultados para esa película."}
     else:
         raise Exception(f"Error al buscar detalles de la película: {response.status_code}")
-
 
 # Función para buscar el ID de una serie de TV
 def get_tv_id(tv_name):
@@ -180,7 +181,6 @@ tmdb_function_descriptors.append({
     }
 })
 
-
 @app.errorhandler(403)
 def forbidden(e):
     return render_template("403.html"), 403
@@ -188,7 +188,6 @@ def forbidden(e):
 @app.route("/")
 def home():
     return redirect(url_for("login"))  # Redirige directamente al login
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -211,7 +210,7 @@ def login():
 
 @app.route("/logout", methods=["GET"])
 @login_required
-def logout():
+def logout():    
     logout_user()
     flash("Sesión cerrada con éxito.", "success")
     return redirect(url_for("login"))
@@ -243,125 +242,64 @@ def register():
 
     return render_template("register.html")
 
-@app.route("/chat", methods=["GET", "POST"])
+@app.route("/chat", methods=['GET', 'POST'])
 @login_required
-def chat():
-    user = current_user
-    profile = Profile.query.filter_by(user_id=user.id).first()
+def chat():    
+    try:
+        user = current_user
+        profile = Profile.query.filter_by(user_id=user.id).first()
+        if not profile:
+            flash("Debes completar tu perfil antes de usar el chat.", "warning")
+            return redirect(url_for("editar_perfil"))
 
-    # Validar si el perfil existe
-    if not profile:
-        flash("Debes completar tu perfil antes de usar el chat.", "warning")
-        return redirect(url_for("editar_perfil"))
+        session["profile"] = {"favorite_movie_genres": profile.favorite_movie_genres}
+        intents = {f"Quiero saber más sobre {topic}": f"Quiero saber más sobre {topic}" for topic in session["profile"]["favorite_movie_genres"]}
+        profile_context = f"Recomendar películas para géneros: {', '.join(profile.favorite_movie_genres)}." if intents else "Recomendaciones de películas."
+        
+        message_text = request.form.get("message")
+        intent = request.form.get("intent")
 
-    session["profile"] = {"favorite_movie_genres": profile.favorite_movie_genres}
-    intents = {}
+        print(f"POST data received: {request.form}")  # Imprime los datos POST recibidos
+        if message_text:
+            intents["Enviar"] = message_text
 
-    # Crear intents basados en los temas de interés del usuario
-    for topic in session["profile"]["favorite_movie_genres"]:
-        intents[f"Quiero saber más sobre {topic}"] = f"Quiero saber más sobre {topic}"
+        if request.method == "POST" and (intent or message_text):
+            user_message = intents.get(intent, message_text)
+            if user_message:
+                db.session.add(Message(content=user_message, author="user", user=user))
+                db.session.commit()
 
-    # Preparar el contexto para el modelo si hay géneros
-    if intents:
-        genres_text = ", ".join(session["profile"]["favorite_movie_genres"])
-        profile_context = f"Recomendar películas de los siguientes géneros o también llamado perfil del usuario: {genres_text}."
-    else:
-        profile_context = "Recomendaciones de películas."
+                messages_for_llm = [{"role": "system", "content": profile_context}] + [
+                    {"role": msg.author, "content": msg.content} for msg in user.messages[-10:]
+                ]
 
-    # Agregar un intent para enviar un mensaje
-    intents["Enviar"] = request.form.get("message")
-
-    if request.method == "GET":
-        # Pasar los intents al template para que se muestren como botones
-        return render_template("chat.html", messages=user.messages, intents=intents)
-
-    # Procesar el intent si se envió uno
-    intent = request.form.get("intent")
-
-    if intent and intent in intents:
-        user_message = intents[intent]
-
-        # Guardar nuevo mensaje en la base de datos
-        db.session.add(Message(content=user_message, author="user", user=user))
-        db.session.commit()
-
-        # Preparar los mensajes para el LLM (modelo de lenguaje)
-        messages_for_llm = [
-            {
-                "role": "system",
-                "content": profile_context,
-            }
-        ]
-
-        # Limitar el historial de mensajes a los últimos 10 para evitar exceder tokens
-        for message in user.messages[-10:]:
-            messages_for_llm.append(
-                {
-                    "role": message.author,
-                    "content": message.content,
-                }
-            )
-
-        # Llamar al modelo para generar una recomendación
-        chat_completion = client.chat.completions.create(
-            messages=messages_for_llm,
-            model="gpt-4-0613",
-            functions=tmdb_function_descriptors,
-            function_call="auto",
-        )
-
-        # Inicializa un mensaje predeterminado
-        model_response = "Lo siento, no puedo procesar tu solicitud en este momento."
-
-        if chat_completion.choices[0].finish_reason == "function_call":
-            function_call = chat_completion.choices[0].message.function_call
-            arguments = eval(function_call.arguments)
-
-            if function_call.name == "get_streaming_providers":
                 try:
-                    providers = get_streaming_providers(arguments['name'], arguments['type'])
-                    model_response = f"Proveedores de streaming en Chile para '{arguments['name']}' ({arguments['type']}): {', '.join(providers)}"
-                except Exception as e:
-                    model_response = f"Hubo un error al obtener los proveedores: {str(e)}"
-
-            elif function_call.name == "get_movie_details":
-                try:
-                    # Llama a la función para obtener los detalles de la película
-                    movie_details = get_movie_details(arguments['movie_name'])
-
-                    # Prepara un contexto enriquecido para OpenAI
-                    additional_context = f"Información de la película '{arguments['movie_name']}': {movie_details}. Usa esta información para responder de manera completa y útil al usuario."
-
-                    # Reenvía los mensajes al modelo con el contexto adicional
-                    messages_for_llm.append({
-                        "role": "system",
-                        "content": additional_context,
-                    })
-
-                    # Llamada al modelo para generar una respuesta elaborada
-                    enriched_response = client.chat.completions.create(
+                    chat_completion = client.chat.completions.create(
                         messages=messages_for_llm,
-                        model="gpt-4-0613",
+                        model="gpt-4o",
+                        functions=tmdb_function_descriptors,
+                        function_call="auto",
                     )
-                    model_response = enriched_response.choices[0].message.content or "Lo siento, no pude elaborar una respuesta."
                 except Exception as e:
-                    model_response = f"Hubo un error al obtener la información de la película: {str(e)}"
+                    return jsonify({'status': 'error', 'message': f'Error del modelo: {str(e)}'}), 500
 
-        else:
-            # Asignar respuesta generativa si no hay función
-            model_response = chat_completion.choices[0].message.content or "No se generó una respuesta válida."
+                model_response = chat_completion.choices[0].message.content if chat_completion.choices else "No puedo procesar tu solicitud."
 
-        # Asegúrate de que el mensaje no sea nulo antes de guardar en la base de datos
-        if model_response and model_response.strip():
-            db.session.add(
-                Message(content=model_response, author="assistant", user=user)
-            )
-            db.session.commit()
-        else:
-            print("Error: El contenido de la respuesta está vacío. No se guardó el mensaje.")
+                if model_response.strip():
+                    db.session.add(Message(content=model_response, author="assistant", user=user))
+                    db.session.commit()
 
-    # Renderizar la plantilla con los nuevos mensajes
-    return render_template("chat.html", messages=user.messages, intents=intents)
+            messages_data = [{"author": msg.author, "content": msg.content} for msg in user.messages]
+            return jsonify({'status': 'success', 'messages': messages_data})
+
+        if request.method == "GET":
+            return render_template("chat.html", messages=user.messages, intents=intents)
+
+    except Exception as e:
+        print(f"Error general en la función 'chat': {str(e)}")
+        return jsonify({'status': 'error', 'message': f'Error inesperado: {str(e)}'}), 500
+
+    return jsonify({'status': 'error', 'message': 'Request no válido.'}), 400
 
 @app.post("/recommend")
 @login_required
@@ -387,7 +325,7 @@ def recommend():
     # Llamar al modelo para generar una recomendación
     chat_completion = client.chat.completions.create(
         messages=messages_for_llm,
-        model="gpt-4-0613",
+        model="gpt-4o",
     )
 
     message = chat_completion.choices[0].message.content
@@ -420,6 +358,12 @@ def editar_perfil():
         # Redirigir o mostrar un mensaje de éxito
         flash("Perfil actualizado con éxito", "success")
         return redirect(url_for("editar_perfil"))
+
+    return render_template("editar_perfil.html", profile=profile)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
 
     return render_template("editar_perfil.html", profile=profile)
 
