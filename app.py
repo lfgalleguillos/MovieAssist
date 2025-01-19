@@ -253,7 +253,7 @@ def chat():
             return redirect(url_for("editar_perfil"))
 
         session["profile"] = {"favorite_movie_genres": profile.favorite_movie_genres}
-        intents = {f"Quiero saber más sobre {topic}": f"Quiero saber más sobre {topic}" for topic in session["profile"]["favorite_movie_genres"]}
+        intents = {f"Recomiéndame una película de {topic}": f"Recomiéndame una película de {topic}" for topic in session["profile"]["favorite_movie_genres"]}
         profile_context = f"Recomendar películas para géneros: {', '.join(profile.favorite_movie_genres)}." if intents else "Recomendaciones de películas."
         
         message_text = request.form.get("message")
