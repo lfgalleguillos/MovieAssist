@@ -363,9 +363,3 @@ def editar_perfil():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-    return render_template("editar_perfil.html", profile=profile)
-
-if __name__ == "__main__":
-    app.run(debug=True)
