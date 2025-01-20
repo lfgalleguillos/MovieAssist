@@ -205,6 +205,7 @@ def login():
             flash("Inicio de sesión exitoso.", "success")
             return redirect(url_for("chat"))  # Redirige al chat después de iniciar sesión correctamente
         else:
+            # Flash para enviar un mensaje de error
             flash("Correo o contraseña incorrectos.", "danger")
 
     return render_template("login.html")  
@@ -259,7 +260,7 @@ def chat():
 
     # Crear intents basados en los temas de interés del usuario
     for topic in session["profile"]["favorite_movie_genres"]:
-        intents[f"Recomiéndame una película de {topic}"] = f"Recomiéndame una película de {topic}"
+        intents[f"Quiero saber más sobre {topic}"] = f"Quiero saber más sobre {topic}"
 
     # Preparar el contexto para el modelo si hay géneros
     if intents:
