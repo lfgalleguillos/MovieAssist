@@ -1,4 +1,4 @@
-# iaMovieAssist
+# MovieAssist
 #funciones: 
 #1- Pedir y guardar generos favoritos en la base de datos. Se pueden hacer preguntas sobre ellos.
 #2- Se conecta a la funcion Movies->Details
