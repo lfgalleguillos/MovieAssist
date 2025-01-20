@@ -9,4 +9,4 @@
 #(antes obtiene el ID)
 
 #javascript: Cuadro que avisa que no hay mensaje si se aprieta enviar sin nada escrito. 
-#javascript: aviso de error si no hay correo, si el correo es equivocado o si el usuario no existe
+#javascript: aviso de error si no hay correo, si el correo es @ da un mensaje de aviso. 
