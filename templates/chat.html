@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Chat con MovieAssist
+{% endblock %}
+
+{% block content %}
+
+<div class="fixed-top bg-primary text-white py-3 px-4" style="z-index: 1030;">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h4 mb-0">Chat con MovieAssist</h1>
+            <div class="d-flex align-items-center">
+                <!-- Mostrar el nombre del usuario conectado -->
+                <p class="mb-0 me-3">Bienvenido, {{ current_user.email }}</p>
+                <!-- Botón para editar perfil -->
+                <a href="{{ url_for('editar_perfil') }}" class="btn btn-light me-2">Editar perfil</a>
+                <!-- Botón para cerrar sesión -->
+                <form action="{{ url_for('logout') }}" method="get" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Cerrar sesión</button>
+                </form>
+            </div>
+        </div>
+        <!-- Variables de sesión -->
+        <div class="mt-2">
+            <p class="small mb-0">
+                Preferencias: <strong>{{ session['profile']['favorite_movie_genres'] | join(', ') }}</strong>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Added a spacer div to account for fixed header height -->
+<div style="height: 80px;"></div>
+
+<div class="container chat-container col-xxl-8 px-4 py-5">
+    <!-- Sección de mensajes -->
+    <div class="messages-section mb-5" id="messages-section" style="max-height: 500px; overflow-y: auto;">
+        {% for message in messages %}
+            {% if message.author == 'assistant' %}
+            <div class="d-flex flex-row justify-content-start mb-4">
+                <img src="{{ url_for('static', filename='bot.png') }}" alt="avatar 1" style="width: 60px; height: 100%;">
+                <div class="p-3 ms-3 message-box assistant-message">
+                    <p class="small mb-0 text-white">{{message.content}}</p>
+                </div>
+            </div>
+            {% else %}
+                <div class="d-flex flex-row justify-content-end mb-4">
+                    <img src="{{ url_for('static', filename='user.png') }}" alt="avatar 2" style="width: 50px; height: 100%;">
+                    <div class="p-3 me-3 message-box user-message">
+                        <p class="small mb-0 text-teal">{{message.content}}</p>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <!-- Mostrar los intents siempre -->
+    <div class="d-flex flex-wrap mb-4 pt-2" style="padding-top: 10px;">
+        {% for intent, message in intents.items() %}
+            <form method="POST" class="me-2 mb-2">
+                {% if intent != 'Enviar' %}
+                    <button class="btn btn-warning btn-sm" type="submit" name="intent" value="{{ intent }}">
+                        {{ intent }}
+                    </button>
+                {% endif %}
+            </form>
+        {% endfor %}
+    </div>
+    <!-- Formulario de entrada de mensaje -->
+    <div class="message-input-container">
+        <form method="POST">
+            <div class="input-group mb-3">
+                <input name="message" required="required" class="form-control" placeholder="Enviar mensaje MovieAssist" aria-label="Tu mensaje" aria-describedby="send-message"/>
+                <input type="submit" class="btn btn-primary" id="send-message" name="intent" value="Enviar"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>  
+    // Scroll al final de la sección de mensajes al cargar la página
+    window.onload = function() {
+        setTimeout(() => {
+            const messagesSection = document.getElementById('messages-section');
+            if (messagesSection) {
+                messagesSection.scrollTop = messagesSection.scrollHeight;
+            }
+        }, 100);
+    };
+</script>
+
+{% endblock %}
